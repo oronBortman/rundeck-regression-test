@@ -1,0 +1,301 @@
+{
+  "source": [
+    {
+      "target": "src/new_screening",
+      "repo": "git@github.com:SeeTrueAI/screening.git",
+      "checkout": "origin/oron/ct/idss/check-refactor_idss_with_inference_fixes-dual"
+    },
+    {
+      "target": "src/screening",
+      "repo": "git@github.com:SeeTrueAI/screening.git",
+      "checkout": "oron/ct/idss/inference_fixes-dual"
+    },
+    {
+      "target": "src/database",
+      "repo": "git@github.com:SeeTrueAI/DataBase.git",
+      "checkout": "9ef13c854b9ee7bc0fff3d00d3cab9a000261b0f"
+    }
+  ],
+  "dataa": [
+    {
+      "target": "net2",
+      "type": "dir",
+      "dir": "/remote/nas/algo/mora/ct_models/ct_v19",
+      "symlink": "each",
+      "only": ["yolo_600000.weights", "st.name", "yolo.cfg"]
+    },
+    {
+      "target": "data/raw",
+      "url": "dev.storage.int.seetrue.ai",
+      "type": "sftp",
+      "dir": "FTP/Screening/screening_data/CT/data/schipol/amsterdam_2018SOC",
+      "symlink": "each",
+      "from_csv": ["src/database/ct/schiphol/Inference/e2e_release/protocol_sample.csv", "scan_ID_ftp"]
+    },
+    {
+      "target": "data/raw",
+      "url": "dev.storage.int.seetrue.ai",
+      "type": "sftp",
+      "dir": "FTP/Screening/screening_data/CT/data/schipol/TNO_Weapon/IDSS_Sharps/scans",
+      "symlink": "each",
+      "from_csv": ["src/database/ct/schiphol/Inference/e2e_release/protocol_sample.csv", "scan_ID_ftp"]
+    },
+    {
+      "target": "data/raw",
+      "url": "dev.storage.int.seetrue.ai",
+      "type": "sftp",
+      "dir": "FTP/Screening/screening_data/CT/data/schipol/TNO_Weapon/IDSS_Guns/scans",
+      "symlink": "each",
+      "from_csv": ["src/database/ct/schiphol/Inference/e2e_release/protocol_sample.csv", "scan_ID_ftp"]
+    },
+    {
+      "target": "data/gt_gun",
+      "url": "dev.storage.int.seetrue.ai",
+      "type": "sftp",
+      "dir": "FTP/Screening/screening_data/CT/data/schipol/TNO_Weapon/IDSS_Guns/masks",
+      "symlink": "each",
+      "from_csv": ["src/database/ct/schiphol/Inference/e2e_release/protocol_gun.csv", "masks"]
+    },
+    {
+      "target": "data/gt_knife",
+      "url": "dev.storage.int.seetrue.ai",
+      "type": "sftp",
+      "dir": "FTP/Screening/screening_data/CT/data/schipol/TNO_Weapon/IDSS_Sharps/masks",
+      "symlink": "each",
+      "from_csv": ["src/database/ct/schiphol/Inference/e2e_release/protocol_knife.csv", "masks"]
+    }
+
+  ],
+  "config": [
+    {
+      "target": "main.json",
+      "type": "json",
+      "input": "src/screening/ct/weapons/main_ct_weapons.json",
+      "set": [
+ 		[["DNIndexer","DEFAULT","weights_file"], "/local/private/oleg/CT/NEW_DATA_SCHIPHOL/inference/net2/yolo_600000.weights"],
+                [["DNIndexer","DEFAULT","cfg_file"], "/local/private/oleg/CT/NEW_DATA_SCHIPHOL/inference/net2/yolo.cfg"],
+                [["DNIndexer","DEFAULT","classes_file"], "/local/private/oleg/CT/NEW_DATA_SCHIPHOL/inference/net2/st.name"],
+                [["DNIndexer","DEFAULT","extraction_layer_num"], 30],
+
+                [["DNIndexer","WPA_GUN_METAL","threshold"], 0.684],
+                [["DNIndexer","WPA_GUN_PLASTIC","threshold"], 0.797],
+                [["DNIndexer","WPA_KNIFE","threshold"], 0.816],
+                [["DNIndexer","WPB_GUN_METAL","threshold"], 0.497],
+                [["DNIndexer","WPB_GUN_PLASTIC","threshold"], 0.732],
+                [["DNIndexer","WPB_KNIFE","threshold"], 0.699],
+
+                [["MatcherFactory","DEFAULT","matcher_method"],"parallel"],
+                [["MatchSuppressor","DEFAULT","coef"],0],
+
+                [["DataPreProcess", "DEFAULT","item_mask_thr"],750],
+                [["DataPreProcess", "DEFAULT","crop_threshold"],0.002],
+                [["DataPreProcess", "DEFAULT","zscale"],1.78],
+                [["DataPreProcess", "DEFAULT","naming_scheme"],"tamar"],
+                [["DataPreProcess", "DEFAULT","single_chan"],"high"],
+		[["DataPreProcess", "DEFAULT", "remove_borders"], true],
+
+                [["VolumeProcessor", "DEFAULT", "scale_factor"], 1],
+
+                [["BlobRayCreator", "DEFAULT","threshold"], 0 ],
+                [["BlobRayCreator", "DEFAULT","num_samples"], 80 ],
+                [["BlobRayCreator", "DEFAULT","rad_factor"], 6 ],
+                [["BlobRayCreator", "DEFAULT","mask_factor"], 6 ],
+                [["BlobRayCreator", "DEFAULT","length_factor"], 6 ],
+                [["BlobRayCreator", "DEFAULT","use_cuda"], true ],
+                [["BlobRayCreator", "DEFAULT","use_em"], false ],
+                [["BlobRayCreator", "DEFAULT","min_density"], null ],
+                [["BlobRayCreator", "DEFAULT","segment_th"], null ],
+		
+
+                [["BlobRayCreator", "GUN_PLASTIC","zoom"], 0.5 ],
+                [["BlobRayCreator", "GUN_PLASTIC","vmax"], 1000 ],
+                [["BlobRayCreator", "GUN_PLASTIC","threshold"], 0 ],
+                [["BlobRayCreator", "GUN_PLASTIC","num_blobs"], 60 ],
+                [["BlobRayCreator", "GUN_PLASTIC","num_samples"], 80 ],
+                [["BlobRayCreator", "GUN_PLASTIC","min_points"], 50 ],
+                [["BlobRayCreator", "GUN_PLASTIC","slice_width"], 20 ],
+                [["BlobRayCreator", "GUN_PLASTIC","values_win"], [[500,1000],[500,1000]] ],
+                [["BlobRayCreator", "GUN_PLASTIC","rad_factor"], 6 ],
+                [["BlobRayCreator", "GUN_PLASTIC","mask_factor"], 6 ],
+                [["BlobRayCreator", "GUN_PLASTIC","length_factor"], 6 ],
+                [["BlobRayCreator", "GUN_PLASTIC","use_cuda"], true ],
+                [["BlobRayCreator", "GUN_PLASTIC","use_em"], false ],
+                [["BlobRayCreator", "GUN_PLASTIC","local_peaks_smooth"], 5 ],
+                [["BlobRayCreator", "GUN_PLASTIC","local_peaks_radius"], 20 ],
+                [["BlobRayCreator", "GUN_PLASTIC","local_peaks_mask_th"], 0.06 ],
+                [["BlobRayCreator", "GUN_PLASTIC","view_name_prefix"], "PLASTIC" ],
+
+                [["BlobRayCreator", "GUN_METAL","threshold"], 0 ],
+                [["BlobRayCreator", "GUN_METAL","num_blobs"], 5 ],
+                [["BlobRayCreator", "GUN_METAL","num_samples"], 80 ],
+                [["BlobRayCreator", "GUN_METAL","values_win"], [[3000.0,80000.0],[3000.0,80000.0]] ],
+                [["BlobRayCreator", "GUN_METAL","rad_factor"], 6 ],
+                [["BlobRayCreator", "GUN_METAL","mask_factor"], 6 ],
+                [["BlobRayCreator", "GUN_METAL","length_factor"], 6 ],
+                [["BlobRayCreator", "GUN_METAL","use_cuda"], true ],
+                [["BlobRayCreator", "GUN_METAL","use_em"], false ],
+                [["BlobRayCreator", "GUN_METAL","blob_max_length"], 350 ],
+                [["BlobRayCreator", "GUN_METAL","blob_max_ratio"], 10 ],
+                [["BlobRayCreator", "GUN_METAL","min_density"], 0.05 ],
+                [["BlobRayCreator", "GUN_METAL","segment_th"], 0.1 ],
+                [["BlobRayCreator", "GUN_METAL","view_name_prefix"], "METAL" ],
+
+
+                [["BlobRayCreator", "KNIFE","Enabled"], true ],
+                [["BlobRayCreator", "KNIFE","threshold"], 0 ],
+                [["BlobRayCreator", "KNIFE","num_blobs"], 15 ],
+                [["BlobRayCreator", "KNIFE","num_samples"], 80 ],
+                [["BlobRayCreator", "KNIFE","values_win"], [[3000.0,80000.0],  [3000.0, 80000.0]] ],
+                [["BlobRayCreator", "KNIFE","rad_factor"], 6 ],
+                [["BlobRayCreator", "KNIFE","mask_factor"], 6 ],
+                [["BlobRayCreator", "KNIFE","use_cuda"], true ],
+                [["BlobRayCreator", "KNIFE","use_em"], false ],
+                [["BlobRayCreator", "KNIFE","min_density"], 0.05 ],
+                [["BlobRayCreator", "KNIFE","segment_th"], 0.1 ],
+                [["BlobRayCreator", "KNIFE","view_name_prefix"], "KNIFE" ],
+
+                [["CtWeaponsAppEngine","DEFAULT","suppress_matches"],false],
+
+                [["CtWeaponsAppEngine","DEFAULT","working_points","WP_B","gun","metal","concepts_path"],"/local/private/oleg/CT/NEW_DATA_SCHIPHOL/inference/concepts_gun/concepts_e2e"],
+                [["CtWeaponsAppEngine","DEFAULT","working_points","WP_B","gun","metal","coef","gun"], 1],
+                [["CtWeaponsAppEngine","DEFAULT","working_points","WP_B","gun","metal","detection_method"], "e2e"],
+                [["CtWeaponsAppEngine","DEFAULT","working_points","WP_B","gun","metal","score_factor"], 1.0],
+                [["CtWeaponsAppEngine","DEFAULT","working_points","WP_B","gun","metal","indexer_mode"], "wpb_gun_metal"],
+                [["CtWeaponsAppEngine","DEFAULT","working_points","WP_B","gun","metal","vol_proc_mode"], "gun_metal"],
+
+                [["CtWeaponsAppEngine","DEFAULT","working_points","WP_B","gun","plastic","concepts_path"], "/local/private/oleg/CT/NEW_DATA_SCHIPHOL/inference/concepts_gun/concepts_e2e"],
+                [["CtWeaponsAppEngine","DEFAULT","working_points","WP_B","gun","plastic","coef","gun"], 1],
+                [["CtWeaponsAppEngine","DEFAULT","working_points","WP_B","gun","plastic","detection_method"], "e2e"],
+                [["CtWeaponsAppEngine","DEFAULT","working_points","WP_B","gun","plastic","score_factor"], 1.0],
+                [["CtWeaponsAppEngine","DEFAULT","working_points","WP_B","gun","plastic","indexer_mode"], "wpb_gun_plastic"],
+                [["CtWeaponsAppEngine","DEFAULT","working_points","WP_B","gun","plastic","vol_proc_mode"], "gun_plastic"],
+
+                [["CtWeaponsAppEngine","DEFAULT","working_points","WP_B","knife", "default","concepts_path"], "/local/private/oleg/CT/NEW_DATA_SCHIPHOL/inference/concepts_knife/concepts_e2e"],
+                [["CtWeaponsAppEngine","DEFAULT","working_points","WP_B","knife","default","coef","knife"], 1],
+                [["CtWeaponsAppEngine","DEFAULT","working_points","WP_B","knife","default","detection_method"], "e2e"],
+                [["CtWeaponsAppEngine","DEFAULT","working_points","WP_B","knife","default","score_factor"], 1.0],
+                [["CtWeaponsAppEngine","DEFAULT","working_points","WP_B","knife","default","indexer_mode"], "wpb_knife"],
+                [["CtWeaponsAppEngine","DEFAULT","working_points","WP_B","knife","default","vol_proc_mode"], "knife"]
+      ]
+    },
+    {
+      "target": "main-without-cuda.json",
+      "type": "json",
+      "input": "main.json",
+      "set": [[["BlobRayCreator", "DEFAULT","use_cuda"], false ],
+                [["BlobRayCreator", "GUN_PLASTIC","use_cuda"], false ],
+                [["BlobRayCreator", "GUN_METAL","use_cuda"], false ],
+                [["BlobRayCreator", "KNIFE","use_cuda"], false ]]
+
+    },
+    {
+      "target": "main-cache.json",
+      "type": "json",
+      "input": "main.json",
+      "set": [[["DataPreProcess", "DEFAULT","enable_cache"], true ]]
+    },
+    {
+      "target": "main-without-cuda-cache.json",
+      "type": "json",
+      "input": "main-without-cuda.json",
+      "set": [[["DataPreProcess", "DEFAULT","enable_cache"], true ]]
+    }
+  ],
+  "run_env" :[
+    {"GENERAL_PARAMS": "--save_matches --draw_2d_matches"},
+    {"RAW_INPUT": "-I data/raw"},
+    {"TIFS_INPUT": "-I data/tifs"},
+    {"CUDA_CONFIG": "main.json"},
+    {"CUDA_CACHE_CONFIG": "main-cache.json"},
+    {"NO_CUDA_CONFIG": "main-without-cuda.json"},
+    {"NO_CUDA_CACHE_CONFIG": "main-without-cuda-cache.json"},
+
+    {"MCHS_FILE_NAME": "all_matches.mchs"},
+    {"RESULTS_DIR_NAME": "results"},
+
+    {"ORIG_DIR_PATH": "${RESULTS_DIR_NAME}/orig"},
+    {"NEW_DIR_PATH": "${RESULTS_DIR_NAME}/to_check"},
+  
+    {"ORIG_RAW_DATA_CUDA_PATH":"${ORIG_DIR_PATH}/raw_data/cuda"},
+    {"NEW_RAW_DATA_CUDA_PATH":"${NEW_DIR_PATH}/raw_data/cuda"},
+
+    {"ORIG_RAW_DATA_NO_CUDA_PATH":"${ORIG_DIR_PATH}/raw_data/no_cuda"},
+    {"NEW_RAW_DATA_NO_CUDA_PATH":"${NEW_DIR_PATH}/raw_data/no_cuda"},
+
+    {"RAW_DATA_CUDA_PARAMS":"${GENERAL_PARAMS} --parse_raw -C ${CUDA_CONFIG} ${RAW_INPUT}"},
+    {"RAW_DATA_NO_CUDA_PARAMS":"${GENERAL_PARAMS} --parse_raw -C ${NO_CUDA_CONFIG} ${RAW_INPUT}"},
+
+    {"ORIG_DICOS_CUDA_PATH":"${ORIG_DIR_PATH}/dicos/cuda"},
+    {"NEW_DICOS_CUDA_PATH":"${NEW_DIR_PATH}/dicos/cuda"},
+
+    {"ORIG_DICOS_NO_CUDA_PATH":"${ORIG_DIR_PATH}/dicos/no_cuda"},
+    {"NEW_DICOS_NO_CUDA_PATH":"${NEW_DIR_PATH}/dicos/no_cuda"},
+
+    {"ORIG_DICOS_CUDA_SAVE_CACHE_PATH": "${ORIG_DIR_PATH}/dicos/cuda/save_cache"},
+    {"NEW_DICOS_CUDA_SAVE_CACHE_PATH":  "${NEW_DIR_PATH}/dicos/cuda/save_cache"},
+
+    {"ORIG_DICOS_CUDA_LOAD_CACHE_PATH": "${ORIG_DIR_PATH}/dicos/cuda/load_cache"},
+    {"ORIG_DICOS_CUDA_LOAD_CACHE_PATH":  "${NEW_DIR_PATH}/dicos/cuda/load_cache"},
+
+    {"ORIG_DICOS_NO_CUDA_SAVE_CACHE_PATH": "${ORIG_DIR_PATH}/dicos/no_cuda/save_cache"},
+    {"NEW_DICOS_NO_CUDA_SAVE_CACHE_PATH": "${NEW_DIR_PATH}/dicos/no_cuda/save_cache"},
+
+    {"ORIG_DICOS_NO_CUDA_LOAD_CACHE_PATH": "${ORIG_DIR_PATH}/dicos/no_cuda/load_cache"},
+    {"ORIG_DICOS_NO_CUDA_LOAD_CACHE_PATH": "${NEW_DIR_PATH}/dicos/no_cuda/load_cache"},
+
+    {"ORIG_TIFS_CUDA_PATH":"${ORIG_DIR_PATH}/tifs/cuda"},
+    {"NEW_TIFS_CUDA_PATH":"${NEW_DIR_PATH}/tifs/cuda"},
+
+    {"ORIG_TIFS_NO_CUDA_PATH":"${ORIG_DIR_PATH}/tifs/no_cuda"},
+    {"NEW_TIFS_NO_CUDA_PATH":"${NEW_DIR_PATH}/tifs/no_cuda"},
+
+    {"ORIG_TIFS_CUDA_SAVE_CACHE_PATH": "${ORIG_DIR_PATH}/tifs/cuda/save_cache"},
+    {"NEW_TIFS_CUDA_SAVE_CACHE_PATH":  "${NEW_DIR_PATH}/tifs/cuda/save_cache"},
+
+    {"ORIG_TIFS_CUDA_LOAD_CACHE_PATH": "${ORIG_DIR_PATH}/tifs/cuda/load_cache"},
+    {"NEW_TIFS_CUDA_LOAD_CACHE_PATH":  "${NEW_DIR_PATH}/tifs/cuda/load_cache"},
+
+    {"ORIG_TIFS_NO_CUDA_SAVE_CACHE_PATH": "${ORIG_DIR_PATH}/tifs/no_cuda/save_cache"},
+    {"NEW_TIFS_NO_CUDA_SAVE_CACHE_PATH": "${NEW_DIR_PATH}/tifs/no_cuda/save_cache"},
+
+    {"ORIG_TIFS_NO_CUDA_LOAD_CACHE_PATH": "${ORIG_DIR_PATH}/tifs/no_cuda/load_cache"},
+    {"NEW_TIFS_NO_CUDA_LOAD_CACHE_PATH": "${NEW_DIR_PATH}/tifs/no_cuda/load_cache"}
+  ],
+  "run":
+  [
+    {
+      "name": "dicos file cuda test orig screening",
+      "cmd": "python3 src/screening/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${CUDA_CONFIG} ${RAW_INPUT} --log_dir ${ORIG_DICOS_CUDA_PATH} -O ${ORIG_DICOS_CUDA_PATH}",
+      "path": ["src/screening"],
+      "watch": "Processing"
+    },
+    {
+      "name": "dicos file cuda test new screening",
+      "cmd": "python3 src/new_screening/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${CUDA_CONFIG} ${RAW_INPUT} --log_dir ${NEW_DICOS_CUDA_PATH} -O ${NEW_DICOS_CUDA_PATH}",
+      "path": ["src/new_screening"],
+      "watch": "Processing"
+    },
+    {
+      "name": "dicos file cuda compare new and old screening",
+      "cmd": "diff ${ORIG_DICOS_CUDA_PATH}/${MCHS_FILE_NAME} ${NEW_DICOS_CUDA_PATH}/${MCHS_FILE_NAME} > ${RESULTS_DIR_NAME}/dicos_cuda_res.txt",
+      "watch": "Processing"
+    },
+    {
+      "name": "tifs file cuda test orig screening",
+      "cmd": "for tifs_folder in `ls data/tifs`;do python3 src/new_screening/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${CUDA_CONFIG} ${TIFS_INPUT} --log_dir ${ORIG_TIFS_CUDA_PATH}/20181113_11305500_H_0012750587_IDSS02_1542104987_711 -O ${ORIG_TIFS_CUDA_PATH}/20181113_11305500_H_0012750587_IDSS02_1542104987_711",
+      "path": ["src/new_screening"],
+      "watch": "Processing"
+    },
+    {
+      "name": "tifs file cuda test new screening",
+      "cmd": "python3 src/new_screening/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${CUDA_CONFIG} ${TIFS_INPUT} --log_dir ${NEW_TIFS_CUDA_PATH}/20181113_11305500_H_0012750587_IDSS02_1542104987_711 -O ${NEW_TIFS_CUDA_PATH}/20181113_11305500_H_0012750587_IDSS02_1542104987_711",
+      "path": ["src/new_screening"],
+      "watch": "Processing"
+    },
+    {
+      "name": "tifs file cuda compare new and orig screening",
+      "cmd": "diff ${ORIG_TIFS_CUDA_PATH}/20181113_11305500_H_0012750587_IDSS02_1542104987_711/${MCHS_FILE_NAME} ${NEW_TIFS_CUDA_PATH}/20181113_11305500_H_0012750587_IDSS02_1542104987_711/${MCHS_FILE_NAME} > ${RESULTS_DIR_NAME}/tifs_20181113_11305500_H_0012750587_IDSS02_1542104987_711_cuda_res.txt",
+      "watch": "Processing"
+
+  ]
+}
