@@ -1,14 +1,19 @@
 {
   "source": [
     {
-      "target": "src/new_screening",
+      "target": "src/screening_to_check",
       "repo": "git@github.com:SeeTrueAI/screening.git",
-      "checkout": "origin/oron/ct/idss/check-refactor_idss_with_inference_fixes-dual"
+      "checkout": "origin/ct/idss/refactor_idss"
     },
     {
       "target": "src/screening",
       "repo": "git@github.com:SeeTrueAI/screening.git",
-      "checkout": "oron/ct/idss/inference_fixes-dual"
+      "checkout": "origin/ct/idss/inference_fixes"
+    },
+    {
+      "target": "src/screening_dual",
+      "repo": "git@github.com:SeeTrueAI/screening.git",
+      "checkout": "origin/oron/ct/idss/refactor_idss-dual"
     },
     {
       "target": "src/database",
@@ -204,7 +209,7 @@
   "run_env" :[
     {"GENERAL_PARAMS": "--save_matches --draw_2d_matches"},
     {"RAW_INPUT": "-I data/raw"},
-    {"TIFS_INPUT": "-I data/tifs"},
+    {"TIFS_DIR": "-I data/tifs"},
     {"CUDA_CONFIG": "main.json"},
     {"CUDA_CACHE_CONFIG": "main-cache.json"},
     {"NO_CUDA_CONFIG": "main-without-cuda.json"},
@@ -261,41 +266,114 @@
     {"ORIG_TIFS_NO_CUDA_LOAD_CACHE_PATH": "${ORIG_DIR_PATH}/tifs/no_cuda/load_cache"},
     {"NEW_TIFS_NO_CUDA_LOAD_CACHE_PATH": "${NEW_DIR_PATH}/tifs/no_cuda/load_cache"}
   ],
-  "run":
-  [
+  "run": [
     {
-      "name": "dicos file cuda test orig screening",
-      "cmd": "python3 src/screening/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${CUDA_CONFIG} ${RAW_INPUT} --log_dir ${ORIG_DICOS_CUDA_PATH} -O ${ORIG_DICOS_CUDA_PATH}",
+      "name": "raw data cuda",
+      "use_bash": "True",
+      "cmd": ["python3 src/screening/projects/app/ct_weapons_app_engine.py ${RAW_DATA_CUDA_PARAMS} --log_dir ${ORIG_RAW_DATA_CUDA_PATH} -O ${ORIG_RAW_DATA_CUDA_PATH}",
+              "python3 src/screening_to_check/projects/app/ct_weapons_app_engine.py ${RAW_DATA_CUDA_PARAMS} --log_dir ${NEW_RAW_DATA_CUDA_PATH} -O ${NEW_RAW_DATA_CUDA_PATH}",
+      	      "diff ${ORIG_RAW_DATA_CUDA_PATH}/${MCHS_FILE_NAME} ${NEW_RAW_DATA_CUDA_PATH}/${MCHS_FILE_NAME}"],
+      "path": ["src/screening", "src/screening_to_check"],
+      "watch": "Processing"
+    },
+    {
+      "name": "raw data no cuda",
+      "use_bash": "True",
+      "cmd": ["python3 src/screening/projects/app/ct_weapons_app_engine.py ${RAW_DATA_NO_CUDA_PARAMS} --log_dir ${ORIG_RAW_DATA_NO_CUDA_PATH} -O ${ORIG_RAW_DATA_NO_CUDA_PATH}",
+	      "python3 src/screening_to_check/projects/app/ct_weapons_app_engine.py ${RAW_DATA_NO_CUDA_PARAMS} --log_dir ${NEW_RAW_DATA_NO_CUDA_PATH} -O ${NEW_RAW_DATA_NO_CUDA_PATH}",
+	      "diff ${ORIG_RAW_DATA_NO_CUDA_PATH}/${MCHS_FILE_NAME} ${NEW_RAW_DATA_NO_CUDA_PATH}/${MCHS_FILE_NAME}"],
+      "path": ["src/screening", "src/screening_to_check"],
+      "watch": "Processing"
+    },
+    {
+      "name": "dicos cuda",
+      "use_bash": "True",
+      "cmd": ["python3 src/screening/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${CUDA_CONFIG} -I data/raw --log_dir ${ORIG_DICOS_CUDA_PATH} -O ${ORIG_DICOS_CUDA_PATH}",
+             "python3 src/screening_to_check/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${CUDA_CONFIG} -I data/raw --log_dir ${NEW_DICOS_CUDA_PATH} -O ${NEW_DICOS_CUDA_PATH}",
+	     "diff ${ORIG_DICOS_CUDA_PATH}/${MCHS_FILE_NAME} ${NEW_DICOS_CUDA_PATH}/${MCHS_FILE_NAME}"],
+      "path": ["src/screening", "src/screening_to_check"],
+      "watch": "Processing"
+    },
+    {
+      "name": "dicos cache cuda",
+      "use_bash": "True",
+      "cmd": ["python3 src/screening/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${CUDA_CACHE_CONFIG} -I data/raw --log_dir ${ORIG_DICOS_CUDA_SAVE_CACHE_PATH} -O ${ORIG_DICOS_CUDA_SAVE_CACHE_PATH}",
+	      "mkdir ${ORIG_DICOS_CUDA_LOAD_CACHE_PATH}",
+              "mv data/raw/*.npz ${ORIG_DICOS_CUDA_LOAD_CACHE_PATH}",
+	      "python3 src/screening_to_check/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${CUDA_CACHE_CONFIG} -I data/raw --log_dir ${NEW_DICOS_CUDA_LOAD_CACHE_PATH} -O ${NEW_DICOS_CUDA_LOAD_CACHE_PATH}",
+              "python3 src/screening_to_check/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${CUDA_CACHE_CONFIG} -I data/raw  --log_dir ${NEW_DICOS_CUDA_SAVE_CACHE_PATH} -O ${NEW_DICOS_CUDA_SAVE_CACHE_PATH}",
+              "mkdir ${NEW_DICOS_CUDA_LOAD_CACHE_PATH}",
+              "mv data/raw/*.npz ${NEW_DICOS_CUDA_LOAD_CACHE_PATH}",
+              "python3 src/screening/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${CUDA_CACHE_CONFIG} -I data/raw --log_dir ${ORIG_DICOS_CUDA_LOAD_CACHE_PATH} -O ${ORIG_DICOS_CUDA_LOAD_CACHE_PATH}",
+              "diff ${ORIG_DICOS_CUDA_SAVE_CACHE_PATH}/${MCHS_FILE_NAME} ${NEW_DICOS_CUDA_SAVE_CACHE_PATH}/${MCHS_FILE_NAME}",
+              "diff ${ORIG_DICOS_CUDA_LOAD_CACHE_PATH}/${MCHS_FILE_NAME} ${NEW_DICOS_CUDA_LOAD_CACHE_PATH}/${MCHS_FILE_NAME}"],
       "path": ["src/screening"],
       "watch": "Processing"
     },
     {
-      "name": "dicos file cuda test new screening",
-      "cmd": "python3 src/new_screening/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${CUDA_CONFIG} ${RAW_INPUT} --log_dir ${NEW_DICOS_CUDA_PATH} -O ${NEW_DICOS_CUDA_PATH}",
-      "path": ["src/new_screening"],
+      "name": "dicos no cuda",
+      "cmd": ["python3 src/screening/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${NO_CUDA_CONFIG} -I data/raw --log_dir ${ORIG_DICOS_NO_CUDA_PATH} -O ${ORIG_DICOS_NO_CUDA_PATH}",
+	      "python3 src/screening_to_check/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${NO_CUDA_CONFIG} -I data/raw --log_dir ${NEW_DICOS_NO_CUDA_PATH} -O ${NEW_DICOS_NO_CUDA_PATH}",
+	      "diff ${ORIG_DICOS_NO_CUDA_PATH}/${MCHS_FILE_NAME} ${NEW_DICOS_NO_CUDA_PATH}/${MCHS_FILE_NAME}"],
+      "path": ["src/screening", "src/screening_to_check"],
+      "watch": "Processing"
+    },
+        {
+      "name": "dicos cache no cuda",
+      "use_bash": "True",
+      "cmd": ["python3 src/screening/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${NO_CUDA_CACHE_CONFIG} -I data/raw --log_dir ${ORIG_DICOS_NO_CUDA_SAVE_CACHE_PATH} -O ${ORIG_DICOS_NO_CUDA_SAVE_CACHE_PATH}",
+	      "mkdir ${ORIG_DICOS_NO_CUDA_SAVE_CACHE_PATH}",
+              "mv data/raw/*.npz ${ORIG_DICOS_NO_CUDA_LOAD_CACHE_PATH}",
+              "python3 src/screening_to_check/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${NO_CUDA_CACHE_CONFIG} -I data/raw --log_dir ${NEW_DICOS_NO_CUDA_LOAD_CACHE_PATH} -O ${NEW_DICOS_NO_CUDA_LOAD_CACHE_PATH}",
+              "python3 src/screening_to_check/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${NO_CUDA_CACHE_CONFIG} -I data/raw  --log_dir ${NEW_DICOS_NO_CUDA_SAVE_CACHE_PATH} -O ${NEW_DICOS_NO_CUDA_SAVE_CACHE_PATH}",
+              "mkdir ${NEW_DICOS_NO_CUDA_LOAD_CACHE_PATH}",
+              "mv data/raw/*.npz ${NEW_DICOS_NO_CUDA_LOAD_CACHE_PATH}",
+              "python3 src/screening/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${NO_CUDA_CACHE_CONFIG} -I data/raw --log_dir ${ORIG_DICOS_NO_CUDA_LOAD_CACHE_PATH} -O ${ORIG_DICOS_NO_CUDA_LOAD_CACHE_PATH}",
+              "diff ${ORIG_DICOS_NO_CUDA_SAVE_CACHE_PATH}/${MCHS_FILE_NAME} ${NEW_DICOS_NO_CUDA_SAVE_CACHE_PATH}/${MCHS_FILE_NAME}",
+              "diff ${ORIG_DICOS_NO_CUDA_LOAD_CACHE_PATH}/${MCHS_FILE_NAME} ${NEW_DICOS_NO_CUDA_LOAD_CACHE_PATH}/${MCHS_FILE_NAME}"],
+      "path": ["src/screening", "src/screening_to_check"],
       "watch": "Processing"
     },
     {
-      "name": "dicos file cuda compare new and old screening",
-      "cmd": "diff ${ORIG_DICOS_CUDA_PATH}/${MCHS_FILE_NAME} ${NEW_DICOS_CUDA_PATH}/${MCHS_FILE_NAME} > ${RESULTS_DIR_NAME}/dicos_cuda_res.txt",
+      "name": "tifs cuda",
+      "cmd": ["for tifs_folder in `ls data/tifs`;do python3 src/screening_to_check/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${CUDA_CONFIG} -I data/raw --log_dir ${ORIG_TIFS_CUDA_PATH}/$tifs_folder -O ${ORIG_TIFS_CUDA_PATH}/$tifs_folder;done",
+             "for tifs_folder in `ls data/tifs`;do python3 src/screening_to_check/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${CUDA_CONFIG} -I data/raw --log_dir ${NEW_TIFS_CUDA_PATH}/$tifs_folder -O ${NEW_TIFS_CUDA_PATH}/$tifs_folder;done",
+	     "for tifs_folder in `ls data/tifs; do diff ${ORIG_TIFS_CUDA_PATH}/$tifs_folder/${MCHS_FILE_NAME} ${NEW_TIFS_CUDA_PATH}/$tifs_folder/${MCHS_FILE_NAME} > ${RESULTS_DIR_NAME}/tifs_$tifs_folder_cuda_res.txt;done"],
+      "path": ["src/screening", "src/screening_to_check"],
       "watch": "Processing"
     },
     {
-      "name": "tifs file cuda test orig screening",
-      "cmd": "for tifs_folder in `ls data/tifs`;do python3 src/new_screening/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${CUDA_CONFIG} ${TIFS_INPUT} --log_dir ${ORIG_TIFS_CUDA_PATH}/20181113_11305500_H_0012750587_IDSS02_1542104987_711 -O ${ORIG_TIFS_CUDA_PATH}/20181113_11305500_H_0012750587_IDSS02_1542104987_711",
-      "path": ["src/new_screening"],
+      "name": "tifs cache",
+      "cmd": ["for tifs_folder in `ls data/tifs`;do python3 src/screening/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${CUDA_CACHE_CONFIG} --log_dir ${ORIG_TIFS_CUDA_SAVE_CACHE_PATH}/$tifs_folder -O ${ORIG_TIFS_CUDA_SAVE_CACHE_PATH}/$tifs_folder;done",
+             "mv ${ORIG_TIFS_CUDA_SAVE_CACHE_PATH}/*.npz ${ORIG_TIFS_CUDA_LOAD_CACHE_PATH};done",
+             "for tifs_folder in `ls data/tifs`;do python3 src/screening/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${CUDA_CACHE_CONFIG} -I data/raw --log_dir ${ORIG_TIFS_CUDA_LOAD_CACHE_PATH}/$tifs_folder -O ${ORIG_TIFS_CUDA_LOAD_CACHE_PATH}/$tifs_folder",
+	     "for tifs_folder in `ls data/tifs`;do python3 src/screening_to_check/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${CUDA_CACHE_CONFIG} -I data/raw  --log_dir ${NEW_TIFS_CUDA_SAVE_CACHE_PATH}/$tifs_folder -O ${NEW_TIFS_CUDA_SAVE_CACHE_PATH}/$tifs_folder;done",
+	     "mv ${ORIG_TIFS_CUDA_SAVE_CACHE_PATH}/*.npz ${ORIG_TIFS_CUDA_LOAD_CACHE_PATH};done",
+             "for tifs_folder in `ls data/tifs`;do python3 src/screening/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${CUDA_CACHE_CONFIG} -I data/raw --log_dir ${ORIG_TIFS_CUDA_LOAD_CACHE_PATH}/$tifs_folder -O ${ORIG_TIFS_CUDA_LOAD_CACHE_PATH}/$tifs_folder"],
+      "path": ["src/screening", "src/screening_to_check"],
       "watch": "Processing"
     },
     {
-      "name": "tifs file cuda test new screening",
-      "cmd": "python3 src/new_screening/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${CUDA_CONFIG} ${TIFS_INPUT} --log_dir ${NEW_TIFS_CUDA_PATH}/20181113_11305500_H_0012750587_IDSS02_1542104987_711 -O ${NEW_TIFS_CUDA_PATH}/20181113_11305500_H_0012750587_IDSS02_1542104987_711",
-      "path": ["src/new_screening"],
+      "name": "tifs no cuda",
+      "cmd": ["for tifs_folder in `ls data/tifs`;do python3 src/screening/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${NO_CUDA_CONFIG} -I data/raw --log_dir ${ORIG_TIFS_NO_CUDA_PATH}/$tifs_folder -O ${ORIG_TIFS_NO_CUDA_PATH}/$tifs_folder;done",
+             "for tifs_folder in `ls data/tifs`;do python3 src/screening_to_check/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${NO_CUDA_CONFIG} -I data/raw --log_dir ${NEW_TIFS_NO_CUDA_PATH}/$tifs_folder -O ${NEW_TIFS_NO_CUDA_PATH}/$tifs_folder;done",
+             "for tifs_folder in `ls data/tifs; do diff ${ORIG_TIFS_CUDA_PATH}/$tifs_folder/${MCHS_FILE_NAME} ${NEW_TIFS_NO_CUDA_PATH}/$tifs_folder/${MCHS_FILE_NAME} > ${RESULTS_DIR_NAME}/tifs_$tifs_folder_no_cuda_res.txt;done"],
+      "path": ["src/screening", "src/screening_to_check"],
       "watch": "Processing"
     },
     {
-      "name": "tifs file cuda compare new and orig screening",
-      "cmd": "diff ${ORIG_TIFS_CUDA_PATH}/20181113_11305500_H_0012750587_IDSS02_1542104987_711/${MCHS_FILE_NAME} ${NEW_TIFS_CUDA_PATH}/20181113_11305500_H_0012750587_IDSS02_1542104987_711/${MCHS_FILE_NAME} > ${RESULTS_DIR_NAME}/tifs_20181113_11305500_H_0012750587_IDSS02_1542104987_711_cuda_res.txt",
+      "name": "tifs cache no cuda",
+      "cmd": ["for tifs_folder in `ls data/tifs`;do python3 src/screening/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${NO_CUDA_CACHE_CONFIG} --log_dir ${ORIG_TIFS_NO_CUDA_SAVE_CACHE_PATH}/$tifs_folder -O ${ORIG_TIFS_NO_CUDA_SAVE_CACHE_PATH}/$tifs_folder;done",
+             "for tifs_folder in `ls data/tifs`;do python3 src/screening_to_check/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${NO_CUDA_CACHE_CONFIG} -I data/raw  --log_dir ${NEW_TIFS_NO_CUDA_SAVE_CACHE_PATH}/$tifs_folder -O ${NEW_TIFS_NO_CUDA_SAVE_CACHE_PATH}/$tifs_folder;done",
+             "for tifs_folder in `ls data/tifs; do diff ${ORIG_TIFS_CUDA_CACHE_PATH}/$tifs_folder/${MCHS_FILE_NAME} ${NEW_TIFS_CUDA_PATH}/$tifs_folder/${MCHS_FILE_NAME} > ${RESULTS_DIR_NAME}/tifs_$tifs_folder_no_cuda_save_cache_res.txt;done",
+             "mv ${ORIG_TIFS_NO_CUDA_SAVE_CACHE_PATH}/*.npz ${ORIG_TIFS_NO_CUDA_LOAD_CACHE_PATH};done",
+             "for tifs_folder in `ls data/tifs`;do python3 src/screening/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${NO_CUDA_CACHE_CONFIG} -I data/raw --log_dir ${ORIG_TIFS_NO_CUDA_LOAD_CACHE_PATH}/$tifs_folder -O ${ORIG_TIFS_NO_CUDA_LOAD_CACHE_PATH}/$tifs_folder",
+             "mv ${NEW_TIFS_NO_CUDA_SAVE_CACHE_PATH}/*.npz ${NEW_TIFS_NO_CUDA_LOAD_CACHE_PATH};done",
+             "for tifs_folder in `ls data/tifs`;do python3 src/screening_to_check/projects/app/ct_weapons_app_engine.py --save_matches --draw_2d_matches -C ${NO_CUDA_CACHE_CONFIG} -I data/raw --log_dir ${NEW_TIFS_NO_CUDA_LOAD_CACHE_PATH}/$tifs_folder -O ${NEW_TIFS_NO_CUDA_LOAD_CACHE_PATH}/$tifs_folder",
+             "for tifs_folder in `ls data/tifs; do diff ${ORIG_TIFS_NO_CUDA_CACHE_PATH}/$tifs_folder/${MCHS_FILE_NAME} ${NEW_TIFS_NO_CUDA_PATH}/$tifs_folder/${MCHS_FILE_NAME} > ${RESULTS_DIR_NAME}/tifs_$tifs_folder_no_cuda_load_cache_res.txt;done"],
+      "path": ["src/screening", "src/screening_to_check"],
       "watch": "Processing"
+    }
 
   ]
 }
